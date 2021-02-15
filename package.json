@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@google-cloud/storage": "^5.7.4",
     "fs": "^0.0.1-security",
     "fs-extra": "^9.1.0",
     "os": "^0.1.1",
     "path": "^0.12.7",
     "sharp": "^0.27.1"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
