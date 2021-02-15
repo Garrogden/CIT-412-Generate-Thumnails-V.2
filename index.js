@@ -9,12 +9,34 @@ exports.generateThumbnail = async (data, context) => {
     const storage = new Storage();
     const sourceBucket = storage.bucket(file.bucket);
     const thumbnailBucket = storage.bucket('cit-412-garogden-thumbs');
-
+    const finalImages = storage.bucket('cit-412-garogden-final-images');
     // Create a working directory
     const workingDir = path.join(os.tmpdir(), 'thumbs_temp');
 
     // Create a temporary file path for the file we are working with
     const tmpFilePath = path.join(workingDir, file.name);
+
+
+    //1. Checking the content type being uploaded
+    var fileExtension = "";
+    if (file.contentType == "image/jpeg"){
+        fileExtension = "jpg";
+    } else if (file.contentType == "image/png"){
+        fileExtension = "png";
+    } else {
+        await sourceBucket.file(file.name).delete(function(err, apiResponse) { });
+        return false;
+    };
+
+    //2. Downloading original files to final-images bucket
+    await sourceBucket.file(file.name).download({
+        destination: finalImages
+    });
+
+    //3. Deleting files uploaded to source bucket
+    await fs.remove(fileExtension);
+
+    return true;
 
     // Wait until the temp directory is ready
     await fs.ensureDir(workingDir);
