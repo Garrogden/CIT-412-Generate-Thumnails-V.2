@@ -9,6 +9,7 @@ exports.generateThumbnail = async(data, context) => {
     const storage = new Storage();
     const sourceBucket = storage.bucket(file.bucket);
     const thumbnailBucket = storage.bucket('cit-412-garogden-thumbs');
+    const generationnumb = file.generation;
 
     //create working directory
     const workingDirectory = path.join(os.tmpdir(), 'thumbs-temp');
@@ -30,7 +31,7 @@ exports.generateThumbnail = async(data, context) => {
 
     //loops through and creates images based on size
     const makeThumbnails = sizes.map(async size => {
-        const thumbname = `thumb@${size}_${file.name}`;
+        const thumbname = `thumb@${size}_${file.name}_${generationnumb}`;
         const thumbpath = path.join(workingDirectory, thumbname);
         await sharp(tmpFilePath).resize(size).toFile(thumbpath);
         return thumbnailBucket.upload(thumbpath, {});
@@ -46,12 +47,13 @@ exports.generateThumbnail = async(data, context) => {
     const filterSource = async(file) => {
         if (file.contentType !== 'image/jpeg' && file.contentType !== 'image/png'){
             //if file is not jpeg or png, delete from bucket
-            return deleteFile(file).catch(console.error);
+             return deleteFile(file).catch(console.error)
+;
         }
     }
 
     //2. Downloading original files to final-images bucket
-    await sourceBucket.file(file.name).download({
+    await sourceBucket.file(file.name).copy({
         destination: finalImages
     });
 
