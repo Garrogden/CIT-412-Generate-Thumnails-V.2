@@ -60,5 +60,8 @@ exports.generateThumbnail = async(data, context) => {
     //3. Deleting files uploaded to source bucket
     await fs.remove(file);
 
+    //4. Building a new, unique file name
+    console.log(`Generation number: ${file.generation}`);
+
     return true;
 };
