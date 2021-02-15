@@ -42,17 +42,13 @@ exports.generateThumbnail = async(data, context) => {
 
     return true;
 
-    
     //1. Checking the content type being uploaded
-    var fileExtension = "";
-    if (file.contentType == "image/jpeg"){
-        fileExtension = "jpg";
-    } else if (file.contentType == "image/png"){
-        fileExtension = "png";
-    } else {
-        await sourceBucket.file(file.name).delete(function(err, apiResponse) { });
-        return false;
-    };
+    const filterSource = async(file) => {
+        if (file.contentType !== 'image/jpeg' && file.contentType !== 'image/png'){
+            //if file is not jpeg or png, delete from bucket
+            return deleteFile(file).catch(console.error);
+        }
+    }
 
     //2. Downloading original files to final-images bucket
     await sourceBucket.file(file.name).download({
