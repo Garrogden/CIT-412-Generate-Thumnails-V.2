@@ -4,77 +4,80 @@ const fs = require('fs-extra');
 const os = require('os');
 const {Storage} = require('@google-cloud/storage');
 
-exports.generateThumbnail = async(data, context) => {
-    const file = data;
-    const storage = new Storage();
-    const sourceBucket = storage.bucket(file.bucket);
-    const thumbnailBucket = storage.bucket('cit-412-garogden-thumbs');
-    const generationnumb = file.generation;
-    const modifiedName = file.name.split('@').pop();
+exports.generateThumbnail = async (data, context) => {
 
+  const file = data;
+  const storage = new Storage ();
+  const sourceBucket = storage.bucket(file.bucket);
+  const thumbnailBucket = storage.bucket('cit-412-garogden-thumbs')
 
-    //create working directory
-    const workingDirectory = path.join(os.tmpdir(), 'thumbs-temp');
+  const num = file.generation
 
-    //create temporary filepath
-    const tmpFilePath = path.join(workingDirectory, file.name);
+  const srcBucket = 'cit-412-garogden-source-images'
+  const finalBucket = 'cit-412-garogden-final-images'
+  const fileName = `final_${file.name}_#${num}`
 
-    //Wait until the directory is ready
-    await fs.ensureDir(workingDirectory);
+  async function getMetadata(){
 
-    //Download the uploaded file into the temp directory
-    await sourceBucket.file(file.name).download({
+    //Gets file metadata
+    const [metadata] = await storage
+        .bucket(srcBucket)
+        .file(file.name)
+        .getMetadata();
+
+    if(metadata.contentType === 'image/jpeg' || metadata.contentType === 'image/png'){
+      //Create working directory
+      const workingDir = path.join(os.tmpdir(), 'thumbs_temp');
+      //Create a temporary file path for working file
+      const tmpFilePath = path.join(workingDir, file.name);
+      //Wait until the temp directory is ready
+      await fs.ensureDir(workingDir);
+      //Download the uploaded file to the temp directory
+      await sourceBucket.file(file.name).download({
         destination: tmpFilePath
-    });
+      })
+      //Copy Src file to final srcBucket
+      async function copyFile() {
+        //Copies file to the other bucket
+        await storage
+            .bucket(srcBucket)
+            .file(file.name)
+            .copy(storage.bucket(finalBucket).file(fileName));
+      };
+      //Add an array of thumbnail sizes
+      const sizes = [64, 256];
 
-    //Add an array based on sizes
+      //Declare a function that will loop thru array and create thumbnail for each size in array
+      const makeThumbnails = sizes.map(async size => {
+        const thumbName = `thumb@${size}_${file.name}_#${num}`;
+        const thumbPath = path.join(workingDir, thumbName);
+        await sharp(tmpFilePath).resize(size).toFile(thumbPath);
+        return thumbnailBucket.upload(thumbPath, {})
+      });
 
-    const sizes = [64, 256];
+      //Call the makeThumbnails function
+      copyFile();
+      await Promise.all(makeThumbnails);
 
-    //loops through and creates images based on size
-    const makeThumbnails = sizes.map(async size => {
-        const thumbname = `thumb@${size}_${file.name}_${generationnumb}`;
-        const thumbpath = path.join(workingDirectory, thumbname);
-        await sharp(tmpFilePath).resize(size).toFile(thumbpath);
-        copyFile().catch(console.error);        
-        return thumbnailBucket.upload(thumbpath, {});
-    });
+      //Delete our temp working directory
+      await fs.remove(workingDir);
 
-    await Promise.all(makeThumbnails);
+      //Delete from source img bucket
+      await sourceBucket.file(file.name).delete({
 
-    await fs.remove(workingDirectory);
+      });
+      return true;
 
-    return true;
+    } else {
+      //Delete from Source image bucket
+      await sourceBucket.file(file.name).delete({
 
-    //1. Checking the content type being uploaded
-    const filterSource = async(file) => {
-        if (file.contentType !== 'image/jpeg' && file.contentType !== 'image/png'){
-            //if file is not jpeg or png, delete from bucket
-             return deleteFile(file).catch(console.error)
-;
-        }
+      });
+      return false;
+
     }
 
-    //2. Downloading original files to final-images bucket
-    //await sourceBucket.file(file.name).copy({
-        //destination: finalImages
-        //Upload the original or accepted files into the final images bucket
-    //});
-    async function copyFile() {
-  // Copies the file to the other bucket
-    await storage
-    .bucket("cit-412-garogden-thumbs")
-    .file(file.name)
-    .copy(storage.bucket("cit-412-garogden-final-images").file(`modified_${file.name}_generation-${file.generation}`));
+  };
+  getMetadata();
 
-    //3. Deleting files uploaded to source bucket
-    await fs.remove(file);
-
-    //4. Building a new, unique file name
-    console.log(`Generation number: ${file.generation}`);
-
-    return true;
-}};
-exports.finalImages = () => {
-    console.log("Triggered new function");
-}
+}; //End of generateThumbnail function
