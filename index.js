@@ -75,6 +75,6 @@ exports.generateThumbnail = async(data, context) => {
 
     return true;
 }};
-exports.finalImages = async(data,context) => {
+exports.finalImages = () => {
     console.log("Triggered new function");
 }
