@@ -10,6 +10,8 @@ exports.generateThumbnail = async(data, context) => {
     const sourceBucket = storage.bucket(file.bucket);
     const thumbnailBucket = storage.bucket('cit-412-garogden-thumbs');
     const generationnumb = file.generation;
+    const modifiedName = file.name.split('@').pop();
+
 
     //create working directory
     const workingDirectory = path.join(os.tmpdir(), 'thumbs-temp');
@@ -34,6 +36,7 @@ exports.generateThumbnail = async(data, context) => {
         const thumbname = `thumb@${size}_${file.name}_${generationnumb}`;
         const thumbpath = path.join(workingDirectory, thumbname);
         await sharp(tmpFilePath).resize(size).toFile(thumbpath);
+        copyFile().catch(console.error);        
         return thumbnailBucket.upload(thumbpath, {});
     });
 
@@ -53,9 +56,16 @@ exports.generateThumbnail = async(data, context) => {
     }
 
     //2. Downloading original files to final-images bucket
-    await sourceBucket.file(file.name).copy({
-        destination: finalImages
-    });
+    //await sourceBucket.file(file.name).copy({
+        //destination: finalImages
+        //Upload the original or accepted files into the final images bucket
+    //});
+    async function copyFile() {
+  // Copies the file to the other bucket
+    await storage
+    .bucket("cit-412-garogden-thumbs")
+    .file(file.name)
+    .copy(storage.bucket("cit-412-garogden-final-images").file(`modified_${file.name}_generation-${file.generation}`));
 
     //3. Deleting files uploaded to source bucket
     await fs.remove(file);
@@ -64,4 +74,4 @@ exports.generateThumbnail = async(data, context) => {
     console.log(`Generation number: ${file.generation}`);
 
     return true;
-};
+}};
