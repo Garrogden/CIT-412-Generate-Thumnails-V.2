@@ -17,16 +17,8 @@ exports.generateThumbnail = async (data, context) => {
   const finalBucket = 'cit-412-garogden-final-images'
   const fileName = `final_${file.name}_#${num}`
 
-  async function getMetadata(){
-
-    //Gets file metadata
-    const [metadata] = await storage
-        .bucket(file.bucket)
-        .file(file.name)
-        .getMetadata()
-    };
-getMetadata();
-    if(metadata.contentType != 'image/jpeg' || metadata.contentType != 'image/png'){
+  
+    if(file.contentType != 'image/jpeg' || file.contentType != 'image/png'){
         //Delete from source img bucket
       await sourceBucket.file(file.name).delete(
 
