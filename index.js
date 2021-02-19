@@ -14,7 +14,7 @@ exports.generateThumbnail= async (data, context) => {
     const num = file.generation;
     
     const srcBucket = 'cit-412-garogden-source-imgages';
-    const finalBucket = 'cit412-treyfles-final-images';
+    const finalBucket = 'cit-412-garogden-final-images';
     const fileName = `final_${file.name}_#${num}`;
 
 
