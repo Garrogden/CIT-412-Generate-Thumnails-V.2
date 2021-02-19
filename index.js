@@ -14,7 +14,7 @@ exports.generateThumbnail = async (data, context) => {
   const num = file.generation
 
   
-  const finalBucket = 'cit-412-garogden-final-images'
+  
   const fileName = `final_${file.name}_#${num}`
 
   
@@ -24,6 +24,7 @@ exports.generateThumbnail = async (data, context) => {
 
       );
       console.log("Deleting File");
+      return true;
     }
     
       //Copy Src file to final srcBucket
@@ -32,7 +33,7 @@ exports.generateThumbnail = async (data, context) => {
         await storage
             .bucket(file.bucket)
             .file(file.name)
-            .copy(storage.bucket(finalBucket).file(fileName));
+            .copy(storage.bucket("cit-412-garogden-final-images").file(fileName));
       }; copyFile();
 
       //Create working directory
