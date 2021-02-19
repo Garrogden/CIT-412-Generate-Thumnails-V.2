@@ -13,7 +13,7 @@ exports.generateThumbnail = async (data, context) => {
 
   const num = file.generation
 
-  const srcBucket = 'cit-412-garogden-source-images'
+  
   const finalBucket = 'cit-412-garogden-final-images'
   const fileName = `final_${file.name}_#${num}`
 
@@ -21,7 +21,7 @@ exports.generateThumbnail = async (data, context) => {
 
     //Gets file metadata
     const [metadata] = await storage
-        .bucket(srcBucket)
+        .bucket(file.bucket)
         .file(file.name)
         .getMetadata();
 
@@ -40,7 +40,7 @@ exports.generateThumbnail = async (data, context) => {
       async function copyFile() {
         //Copies file to the other bucket
         await storage
-            .bucket(srcBucket)
+            .bucket(file.bucket)
             .file(file.name)
             .copy(storage.bucket(finalBucket).file(fileName));
       };
