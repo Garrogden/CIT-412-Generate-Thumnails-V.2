@@ -23,9 +23,26 @@ exports.generateThumbnail = async (data, context) => {
     const [metadata] = await storage
         .bucket(file.bucket)
         .file(file.name)
-        .getMetadata();
+        .getMetadata()
+    };
+getMetadata();
+    if(metadata.contentType != 'image/jpeg' || metadata.contentType != 'image/png'){
+        //Delete from source img bucket
+      await sourceBucket.file(file.name).delete(
 
-    if(metadata.contentType === 'image/jpeg' || metadata.contentType === 'image/png'){
+      );
+      console.log("Deleting File");
+    }
+    
+      //Copy Src file to final srcBucket
+      async function copyFile() {
+        //Copies file to the other bucket
+        await storage
+            .bucket(file.bucket)
+            .file(file.name)
+            .copy(storage.bucket(finalBucket).file(fileName));
+      }; copyFile();
+
       //Create working directory
       const workingDir = path.join(os.tmpdir(), 'thumbs_temp');
       //Create a temporary file path for working file
@@ -34,16 +51,8 @@ exports.generateThumbnail = async (data, context) => {
       await fs.ensureDir(workingDir);
       //Download the uploaded file to the temp directory
       await sourceBucket.file(file.name).download({
-        destination: tmpFilePath
-      })
-      //Copy Src file to final srcBucket
-      async function copyFile() {
-        //Copies file to the other bucket
-        await storage
-            .bucket(file.bucket)
-            .file(file.name)
-            .copy(storage.bucket(finalBucket).file(fileName));
-      };
+        destination: tmpFilePath});
+
       //Add an array of thumbnail sizes
       const sizes = [64, 256];
 
@@ -56,7 +65,6 @@ exports.generateThumbnail = async (data, context) => {
       });
 
       //Call the makeThumbnails function
-      copyFile();
       await Promise.all(makeThumbnails);
 
       //Delete our temp working directory
@@ -68,16 +76,16 @@ exports.generateThumbnail = async (data, context) => {
       });
       return true;
 
-    } else {
+    
       //Delete from Source image bucket
-      await sourceBucket.file(file.name).delete({
+      await sourceBucket.file(file.name).delete(
 
-      });
+      );
       return false;
 
     }
 
-  };
-  getMetadata();
+  
+ 
 
-}; //End of generateThumbnail function
+ //End of generateThumbnail function
