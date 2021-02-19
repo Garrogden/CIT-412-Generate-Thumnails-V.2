@@ -9,12 +9,12 @@ exports.generateThumbnail= async (data, context) => {
     const file = data;
     const storage = new Storage();
     const sourceBucket= storage.bucket(file.bucket);
-    const thumbnailBucket= storage.bucket('cit-412-garogden-thumbs');
+    const thumbnailBucket= storage.bucket('cit-412-garogden-thumbs-2');
 
     const num = file.generation;
     
     const srcBucket = 'cit-412-garogden-source-images';
-    const finalBucket = 'cit-412-garogden-final-images';
+    const finalBucket = 'cit-412-garogden-final-images-2';
     const fileName = `final_${file.name}_#${num}`;
 
 
